@@ -1,0 +1,16 @@
+QTabWidget::pane {
+    border: 1px solid #cccccc;
+    background-color: #ffffff;
+}
+QTabBar::tab {
+    background: #f0f0f0;
+    color: #000000;
+    padding: 10px;
+}
+QTabBar::tab:selected {
+    background: #e0e0e0;
+    color: #000000;
+}
+QTabBar::tab:hover {
+    background: #e0e0e0;
+}

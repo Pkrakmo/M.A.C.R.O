@@ -1,0 +1,29 @@
+QWidget {
+    background-color: #ffffff;
+    color: #000000;
+}
+QPushButton {
+    background-color: #e0e0e0;
+    border: 1px solid #b0b0b0;
+    padding: 5px;
+}
+QPushButton:hover {
+    background-color: #d0d0d0;
+}
+QLineEdit {
+    background-color: #f0f0f0;
+    border: 1px solid #b0b0b0;
+    padding: 5px;
+}
+QRadioButton {
+    background-color: #ffffff;
+}
+QGroupBox {
+    border: 1px solid #b0b0b0;
+    margin-top: 10px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+}

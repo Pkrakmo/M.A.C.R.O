@@ -38,8 +38,8 @@ class HTMLPageWidget(QTextBrowser):
         self.setOpenExternalLinks(True)
 
 class LicenseWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("License and Software Information")
         self.setGeometry(100, 100, 800, 400)
         
@@ -57,10 +57,22 @@ class LicenseWindow(QWidget):
         
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
+        
+        self.apply_tab_theme()  # Apply the tab theme
+
+    def apply_tab_theme(self):
+        if self.parent().current_theme == "dark":
+            theme_file = os.path.join(os.path.dirname(__file__), "themes/tab_theme_dark.qss")
+        else:
+            theme_file = os.path.join(os.path.dirname(__file__), "themes/tab_theme_light.qss")
+        
+        with open(theme_file, "r") as file:
+            tab_theme = file.read()
+        self.tab_widget.setStyleSheet(tab_theme)
 
 class SettingsWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setFixedWidth(250)
         
@@ -71,17 +83,55 @@ class SettingsWindow(QWidget):
         self.open_folder_btn.clicked.connect(self.open_settings_folder)
         layout.addWidget(self.open_folder_btn)
         
+        self.theme_switch_btn = QPushButton("Switch to Light Theme")
+        self.theme_switch_btn.clicked.connect(self.switch_theme)
+        layout.addWidget(self.theme_switch_btn)
+        
         self.adjustSize()
+        self.load_settings()
     
     def open_settings_folder(self):
         os.startfile(appdata_dir)
+    
+    def switch_theme(self):
+        if self.parent().current_theme == "dark":
+            self.parent().apply_light_theme()
+            self.theme_switch_btn.setText("Switch to Dark Theme")
+        else:
+            self.parent().apply_dark_theme()
+            self.theme_switch_btn.setText("Switch to Light Theme")
+        self.parent().save_settings()  # Save settings after switching theme
+        self.parent().adjustSize()  # Adjust size after switching theme
+        if self.parent().license_window:
+            self.parent().license_window.apply_tab_theme()  # Apply tab theme if license window is open
+    
+    def save_settings(self):
+        settings = {
+            "theme": self.parent().current_theme
+        }
+        with open(SETTINGS_FILE, "w") as file:
+            json.dump(settings, file)
+    
+    def load_settings(self):
+        if os.path.exists(SETTINGS_FILE):
+            with open(SETTINGS_FILE, "r") as file:
+                settings = json.load(file)
+                theme = settings.get("theme", "light")  # Default to light theme if not specified
+                if theme == "light":
+                    self.parent().apply_light_theme()
+                    self.theme_switch_btn.setText("Switch to Dark Theme")
+                else:
+                    self.parent().apply_dark_theme()
+                    self.theme_switch_btn.setText("Switch to Light Theme")
+        else:
+            self.parent().apply_light_theme()  # Apply light theme if settings file does not exist
+            self.theme_switch_btn.setText("Switch to Dark Theme")
 
 class KeyClickerHolder(QWidget):
     def __init__(self):
         super().__init__()
         icon_file = os.path.join(os.path.dirname(__file__), "icon.png")
         self.setWindowTitle("M.A.C.R.O.")
-        self.setFixedSize(297, 336)
         self.setWindowIcon(QIcon(icon_file))
         
         screen_geometry = QApplication.primaryScreen().geometry()
@@ -97,12 +147,29 @@ class KeyClickerHolder(QWidget):
         self.clicker_thread = ClickerThread()
         self.clicker_thread.click_signal.connect(self.perform_click)
         
-        self.init_ui()
-        self.load_settings()
-        keyboard.add_hotkey("F6", self.toggle_clicking)
-        
         self.license_window = None
         self.settings_window = None
+
+        self.current_theme = "light"  # Default to light theme
+        self.init_ui()
+        self.load_settings()  # Load settings after initializing UI
+        keyboard.add_hotkey("F6", self.toggle_clicking)
+
+    def apply_dark_theme(self):
+        with open(os.path.join(os.path.dirname(__file__), "themes/dark_theme.qss"), "r") as file:
+            dark_theme = file.read()
+        self.setStyleSheet(dark_theme)
+        self.current_theme = "dark"
+        if self.license_window:
+            self.license_window.apply_tab_theme()
+
+    def apply_light_theme(self):
+        with open(os.path.join(os.path.dirname(__file__), "themes/light_theme.qss"), "r") as file:
+            light_theme = file.read()
+        self.setStyleSheet(light_theme)
+        self.current_theme = "light"
+        if self.license_window:
+            self.license_window.apply_tab_theme()
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -171,30 +238,31 @@ class KeyClickerHolder(QWidget):
         self.settings_btn.clicked.connect(self.show_settings)
         layout.addWidget(self.settings_btn)
         
-
-        self.license_label = QLabel('<a href="#">License and Software Information</a>')
-        self.license_label.setOpenExternalLinks(False)
-        self.license_label.linkActivated.connect(self.show_license)
-        layout.addWidget(self.license_label)
+        self.license_btn = QPushButton("License and Software Information")
+        self.license_btn.clicked.connect(self.show_license)
+        layout.addWidget(self.license_btn)
         
         self.setLayout(layout)
+        self.adjustSize()  # Adjust size after setting the layout
         
         self.mouse_radio.toggled.connect(self.update_ui_visibility)
         self.keyboard_radio.toggled.connect(self.update_ui_visibility)
     
     def show_license(self):
         if self.license_window is None:
-            self.license_window = LicenseWindow()
+            self.license_window = LicenseWindow(self)
             self.license_window.setParent(self, Qt.Window)
         self.license_window.move(self.x(), self.y())
         self.license_window.show()
+        self.adjustSize()  # Adjust size after showing the license window
     
     def show_settings(self):
         if self.settings_window is None:
-            self.settings_window = SettingsWindow()
+            self.settings_window = SettingsWindow(self)
             self.settings_window.setParent(self, Qt.Window)
         self.settings_window.move(self.x(), self.y())
         self.settings_window.show()
+        self.adjustSize()  # Adjust size after showing the settings window
     
     def update_ui_visibility(self):
         is_mouse_selected = self.mouse_radio.isChecked()
@@ -202,6 +270,7 @@ class KeyClickerHolder(QWidget):
         self.keyboard_group_box.setVisible(not is_mouse_selected)
         self.action_group_box.setVisible(is_mouse_selected)
         self.device_used = "mouse" if is_mouse_selected else "keyboard"
+        self.adjustSize()  # Adjust size after updating UI visibility
     
     def toggle_clicking(self):
         if self.clicker_thread.isRunning():
@@ -213,6 +282,7 @@ class KeyClickerHolder(QWidget):
             self.clicker_thread.start()
             self.start_stop_btn.setText("Stop (F6)")
         self.save_settings()
+        self.adjustSize()  # Adjust size after toggling clicking
     
     def perform_click(self):
         if self.mouse_radio.isChecked():
@@ -229,6 +299,7 @@ class KeyClickerHolder(QWidget):
             self.key_label.setText(str(self.selected_key))
             self.save_settings()
             listener.stop()
+            self.adjustSize()  # Adjust size after setting the key
         from pynput.keyboard import Listener
         listener = Listener(on_press=on_press)
         listener.start()
@@ -241,6 +312,7 @@ class KeyClickerHolder(QWidget):
             "left": self.left_click.isChecked(),
             "middle": self.middle_click.isChecked(),
             "right": self.right_click.isChecked(),
+            "theme": self.current_theme
         }
         with open(SETTINGS_FILE, "w") as file:
             json.dump(settings, file)
@@ -258,7 +330,15 @@ class KeyClickerHolder(QWidget):
                 self.left_click.setChecked(settings.get("left", True))
                 self.middle_click.setChecked(settings.get("middle", False))
                 self.right_click.setChecked(settings.get("right", False))
+                theme = settings.get("theme", "light")  # Default to light theme if not specified
+                if theme == "light":
+                    self.apply_light_theme()
+                else:
+                    self.apply_dark_theme()
                 self.update_ui_visibility()
+                self.adjustSize()  # Adjust size after loading settings
+        else:
+            self.apply_light_theme()  # Apply light theme if settings file does not exist
 
 if __name__ == "__main__":
     app = QApplication([])
