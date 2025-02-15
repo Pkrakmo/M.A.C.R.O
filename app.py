@@ -82,7 +82,7 @@ class KeyClickerHolder(QWidget):
         icon_file = os.path.join(os.path.dirname(__file__), "icon.png")
         self.setWindowTitle("M.A.C.R.O.")
         self.setFixedSize(297, 336)
-        self.setWindowIcon(QIcon("icon.png"))  # Set the window icon
+        self.setWindowIcon(QIcon(icon_file))
         
         screen_geometry = QApplication.primaryScreen().geometry()
         x = (screen_geometry.width() - self.width()) // 2
@@ -103,6 +103,7 @@ class KeyClickerHolder(QWidget):
         
         self.license_window = None
         self.settings_window = None
+
     def init_ui(self):
         layout = QVBoxLayout()
         
@@ -117,8 +118,7 @@ class KeyClickerHolder(QWidget):
         device_layout.addWidget(self.keyboard_radio)
         self.device_group_box.setLayout(device_layout)
         layout.addWidget(self.device_group_box)
-        
-        # Action selection
+    
         self.action_group_box = QGroupBox("Action")
         action_layout = QHBoxLayout()
         self.action_group = QButtonGroup()
@@ -158,7 +158,6 @@ class KeyClickerHolder(QWidget):
         
         self.key_label.mousePressEvent = self.set_key
         
-        # Frequency input
         self.freq_label = QLabel("Autoclick frequency (ms):")
         layout.addWidget(self.freq_label)
         self.freq_input = QLineEdit("100")
@@ -172,6 +171,7 @@ class KeyClickerHolder(QWidget):
         self.settings_btn.clicked.connect(self.show_settings)
         layout.addWidget(self.settings_btn)
         
+
         self.license_label = QLabel('<a href="#">License and Software Information</a>')
         self.license_label.setOpenExternalLinks(False)
         self.license_label.linkActivated.connect(self.show_license)
