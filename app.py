@@ -79,9 +79,10 @@ class SettingsWindow(QWidget):
 class KeyClickerHolder(QWidget):
     def __init__(self):
         super().__init__()
+        icon_file = os.path.join(os.path.dirname(__file__), "icon.png")
         self.setWindowTitle("M.A.C.R.O.")
-        self.setFixedSize(297, 370)
-        self.setWindowIcon(QIcon("icon.png")) 
+        self.setFixedSize(297, 336)
+        self.setWindowIcon(QIcon("icon.png"))  # Set the window icon
         
         screen_geometry = QApplication.primaryScreen().geometry()
         x = (screen_geometry.width() - self.width()) // 2
@@ -117,6 +118,7 @@ class KeyClickerHolder(QWidget):
         self.device_group_box.setLayout(device_layout)
         layout.addWidget(self.device_group_box)
         
+        # Action selection
         self.action_group_box = QGroupBox("Action")
         action_layout = QHBoxLayout()
         self.action_group = QButtonGroup()
@@ -155,7 +157,8 @@ class KeyClickerHolder(QWidget):
         layout.addWidget(self.keyboard_group_box)
         
         self.key_label.mousePressEvent = self.set_key
-
+        
+        # Frequency input
         self.freq_label = QLabel("Autoclick frequency (ms):")
         layout.addWidget(self.freq_label)
         self.freq_input = QLineEdit("100")
