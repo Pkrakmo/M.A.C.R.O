@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QRadioButton, QButtonGroup, QLineEdit, QHBoxLayout, QGroupBox, QTextBrowser, QTabWidget
-from PySide6.QtCore import Qt, QThread, Signal, QRect
-from PySide6.QtGui import QIcon  # Add this import
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtGui import QIcon
 from pynput.mouse import Controller as MouseController, Button
-from pynput.keyboard import Controller as KeyboardController, Key
+from pynput.keyboard import Controller as KeyboardController
 import keyboard
 import json
 import os
@@ -65,11 +65,11 @@ class LicenseWindow(QWidget):
 class KeyClickerHolder(QWidget):
     def __init__(self):
         super().__init__()
+        icon_file = os.path.join(os.path.dirname(__file__), "icon.png")
         self.setWindowTitle("M.A.C.R.O.")
         self.setFixedSize(297, 336)
-        self.setWindowIcon(QIcon("icon.png"))  # Set the window icon
+        self.setWindowIcon(QIcon(icon_file))
         
-        # Center the window on the screen
         screen_geometry = QApplication.primaryScreen().geometry()
         x = (screen_geometry.width() - self.width()) // 2
         y = (screen_geometry.height() - self.height()) // 2
@@ -87,12 +87,11 @@ class KeyClickerHolder(QWidget):
         self.load_settings()
         keyboard.add_hotkey("F6", self.toggle_clicking)
         
-        self.license_window = None  # Initialize license_window as None
+        self.license_window = None
     
     def init_ui(self):
         layout = QVBoxLayout()
         
-        # Device selection
         self.device_group_box = QGroupBox("Device")
         device_layout = QHBoxLayout()
         self.device_group = QButtonGroup()
@@ -104,8 +103,7 @@ class KeyClickerHolder(QWidget):
         device_layout.addWidget(self.keyboard_radio)
         self.device_group_box.setLayout(device_layout)
         layout.addWidget(self.device_group_box)
-        
-        # Action selection
+    
         self.action_group_box = QGroupBox("Action")
         action_layout = QHBoxLayout()
         self.action_group = QButtonGroup()
@@ -119,7 +117,6 @@ class KeyClickerHolder(QWidget):
         self.action_group_box.setLayout(action_layout)
         layout.addWidget(self.action_group_box)
         
-        # Mouse buttons (Only visible if Mouse is selected)
         self.mouse_group_box = QGroupBox("Mouse Button")
         mouse_button_layout = QHBoxLayout()
         self.mouse_button_group = QButtonGroup()
@@ -136,7 +133,6 @@ class KeyClickerHolder(QWidget):
         self.mouse_group_box.setLayout(mouse_button_layout)
         layout.addWidget(self.mouse_group_box)
         
-        # Keyboard key selection (Only visible if Keyboard is selected)
         self.keyboard_group_box = QGroupBox("Keyboard Key")
         keyboard_layout = QHBoxLayout()
         self.key_label = QLabel("No key selected")
@@ -147,18 +143,15 @@ class KeyClickerHolder(QWidget):
         
         self.key_label.mousePressEvent = self.set_key
         
-        # Frequency input
         self.freq_label = QLabel("Autoclick frequency (ms):")
         layout.addWidget(self.freq_label)
         self.freq_input = QLineEdit("100")
         layout.addWidget(self.freq_input)
         
-        # Start/Stop button
         self.start_stop_btn = QPushButton("Start (F6)")
         self.start_stop_btn.clicked.connect(self.toggle_clicking)
         layout.addWidget(self.start_stop_btn)
         
-        # License label with hyperlink
         self.license_label = QLabel('<a href="#">License and Software Information</a>')
         self.license_label.setOpenExternalLinks(False)
         self.license_label.linkActivated.connect(self.show_license)
@@ -166,7 +159,6 @@ class KeyClickerHolder(QWidget):
         
         self.setLayout(layout)
         
-        # Connect device selection to visibility changes
         self.mouse_radio.toggled.connect(self.update_ui_visibility)
         self.keyboard_radio.toggled.connect(self.update_ui_visibility)
     
