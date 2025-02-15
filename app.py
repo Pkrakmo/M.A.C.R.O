@@ -7,7 +7,10 @@ import keyboard
 import json
 import os
 
-SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "clicker_settings.json")
+appdata_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'MACRO')
+if not os.path.exists(appdata_dir):
+    os.makedirs(appdata_dir)
+SETTINGS_FILE = os.path.join(appdata_dir, "clicker_settings.json")
 
 class ClickerThread(QThread):
     click_signal = Signal()
@@ -26,21 +29,11 @@ class ClickerThread(QThread):
         self.running = False
         self.wait()
 
-class MITLicenseWidget(QTextBrowser):
-    def __init__(self):
+class HTMLPageWidget(QTextBrowser):
+    def __init__(self, html_file):
         super().__init__()
         self.setReadOnly(True)
-        license_file = os.path.join(os.path.dirname(__file__), "TheMITLicense.html")
-        with open(license_file, "r", encoding="utf-8") as file:
-            self.setHtml(file.read())
-        self.setOpenExternalLinks(True)
-
-class SoftwareLicenseWidget(QTextBrowser):
-    def __init__(self):
-        super().__init__()
-        self.setReadOnly(True)
-        license_file = os.path.join(os.path.dirname(__file__), "Software.html")
-        with open(license_file, "r", encoding="utf-8") as file:
+        with open(html_file, "r", encoding="utf-8") as file:
             self.setHtml(file.read())
         self.setOpenExternalLinks(True)
 
@@ -48,19 +41,40 @@ class LicenseWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("License and Software Information")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 800, 400)
         
         layout = QVBoxLayout()
         self.tab_widget = QTabWidget()
         
-        self.macro_license_widget = MITLicenseWidget()
-        self.tab_widget.addTab(self.macro_license_widget, "The MIT License")
-
-        self.software_license_widget = SoftwareLicenseWidget()
-        self.tab_widget.addTab(self.software_license_widget, "Software information")
+        html_pages = [
+            {"name": "The MIT License", "html": "TheMITLicense.html"},
+            {"name": "Software Information", "html": "Software.html"},
+        ]
+        
+        for page in html_pages:
+            widget = HTMLPageWidget(os.path.join(os.path.dirname(__file__), page["html"]))
+            self.tab_widget.addTab(widget, page["name"])
         
         layout.addWidget(self.tab_widget)
         self.setLayout(layout)
+
+class SettingsWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Settings")
+        self.setFixedWidth(250)
+        
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        
+        self.open_folder_btn = QPushButton("Open Settings Folder")
+        self.open_folder_btn.clicked.connect(self.open_settings_folder)
+        layout.addWidget(self.open_folder_btn)
+        
+        self.adjustSize()
+    
+    def open_settings_folder(self):
+        os.startfile(appdata_dir)
 
 class KeyClickerHolder(QWidget):
     def __init__(self):
@@ -88,7 +102,8 @@ class KeyClickerHolder(QWidget):
         keyboard.add_hotkey("F6", self.toggle_clicking)
         
         self.license_window = None
-    
+        self.settings_window = None
+
     def init_ui(self):
         layout = QVBoxLayout()
         
@@ -152,6 +167,11 @@ class KeyClickerHolder(QWidget):
         self.start_stop_btn.clicked.connect(self.toggle_clicking)
         layout.addWidget(self.start_stop_btn)
         
+        self.settings_btn = QPushButton("Settings")
+        self.settings_btn.clicked.connect(self.show_settings)
+        layout.addWidget(self.settings_btn)
+        
+
         self.license_label = QLabel('<a href="#">License and Software Information</a>')
         self.license_label.setOpenExternalLinks(False)
         self.license_label.linkActivated.connect(self.show_license)
@@ -166,9 +186,15 @@ class KeyClickerHolder(QWidget):
         if self.license_window is None:
             self.license_window = LicenseWindow()
             self.license_window.setParent(self, Qt.Window)
-        # Set the position of the LicenseWindow to be the same as the main window
         self.license_window.move(self.x(), self.y())
         self.license_window.show()
+    
+    def show_settings(self):
+        if self.settings_window is None:
+            self.settings_window = SettingsWindow()
+            self.settings_window.setParent(self, Qt.Window)
+        self.settings_window.move(self.x(), self.y())
+        self.settings_window.show()
     
     def update_ui_visibility(self):
         is_mouse_selected = self.mouse_radio.isChecked()
